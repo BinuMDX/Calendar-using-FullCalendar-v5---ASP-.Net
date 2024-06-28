@@ -1,0 +1,142 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<h1>Index</h1>
+
+<div id="calendar"></div>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+
+<style>
+    /* Custom header styles */
+    .fc-header-toolbar {
+        background-color: White; /* Header background color */
+        color: white; /* Header text color */
+        font-family: "Poppins", sans-serif; /* Header font type */
+        font-weight: 500;
+        font-size: 16px; /* Header font size */
+    }
+
+    .fc-toolbar-title {
+        color: black; /* Title text color */
+        font-size: 20px; /* Title font size */
+    }
+
+/*     .fc-button {
+        background-color: red; /* Button background color */
+        color: white; /* Button text color */
+        border: none; /* Remove button border */
+    } */
+
+ 
+
+    .fc-button:hover {
+            background-color: #328E5D; /* Button background color on hover */
+    }
+
+    /* FullCalendar event styles */
+    .fc-event {
+        background-color: #378006; /* Event background color */
+        border-color: #378006; /* Event border color */
+        color: white; /* Event text color */
+    }
+
+    /* Custom container styles */
+    .my-container {
+        background-color: #F0F0EF; 
+        font-family: "Poppins", sans-serif;
+        font-weight: 500;
+        font-style: normal;
+        color: #696969;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            var events = [];
+
+            $.ajax({
+                type: "GET",
+                url: "/home/GetEvents",
+                success: function (data) {
+                    $.each(data, function (i, v) {
+                        events.push({
+                            title: v.Subject,
+                            description: v.Description,
+                            start: moment(v.Start),
+                            end: v.end != null ? moment(v.End) : null,
+                            color: v.ThemeColor,
+                            allDay: v.isFULLDay
+                        });
+                    });
+
+                    GenerateCalendar(events);
+                },
+                error: function (error) {
+                    alert('Failed to load events.');
+                }
+            });
+
+            function GenerateCalendar(events) {
+                var calendarEl = document.getElementById('calendar');
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth', // Default view (month, week, day)
+                    headerToolbar: {
+                        left: 'prev,next today', // Controls on the left
+                        center: 'title', // Title in the center
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' // View options on the right
+                    },
+                    events: events, // Events data
+                    eventTimeFormat: { // Time format for events
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        meridiem: false
+                    },
+                    contentHeight: 600, // Adjust height of the calendar
+                    eventColor: '#378006', // Default event color
+                    eventClick: function(info) { // Event click handler
+                        alert('Event: ' + info.event.title);
+                        // Optionally show more event details or trigger other actions
+                    },
+                    dayMaxEventRows: true, // Limit the number of events per day
+                    views: {
+                        dayGridMonth: {
+                            dayMaxEventRows: 4 // Customize the month view
+                        },
+                        timeGridWeek: {
+                            nowIndicator: true // Show current time indicator
+                        },
+                        timeGridDay: {
+                            nowIndicator: true // Show current time indicator
+                        }
+                    }
+                });
+                calendar.render();
+            }
+        
+        function showEventDetails(event) {
+            // Example: Show event details in a modal or alert
+            var eventDetails = `
+                            <div class="my-container">
+                                <h3>${event.title}</h3>
+                                <p><strong>Start:</strong> ${event.start.format('MMMM Do YYYY, h:mm a')}</p>
+                                <p><strong>End:</strong> ${event.end ? event.end.format('MMMM Do YYYY, h:mm a') : 'No end time'}</p>
+                                <p><strong>Description:</strong> ${event.description}</p>
+                            </div>
+                        `;
+            alert(eventDetails);
+        }
+        });
+    </script>
+}
